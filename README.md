@@ -22,5 +22,5 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-env $(cat .env | xargs) ./service.py --model-path ../../cloudnet-web/contribute/model.onnx
+env $(cat .env | xargs) ./service.py
 ```
