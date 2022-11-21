@@ -1,0 +1,12 @@
+version: "3"
+services:
+  web:
+    build:
+      context: ../../
+      dockerfile: contribute/docker/Dockerfile
+    working_dir: /opt/service
+    network_mode: bridge
+    # setup through .env file
+    # environment:
+    #   - TGBOT_API_TOKEN
+    #   - TGBOT_MODEL_PATH
