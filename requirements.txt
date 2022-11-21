@@ -1,1 +1,5 @@
 aiogram==2.23
+
+onnxruntime
+numpy
+pillow

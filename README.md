@@ -11,3 +11,9 @@ python3 -m venv venv
 . ./venv/bin/activate
 pip install -r requirements.txt
 ```
+
+## Run
+
+```bash
+env $(cat .env | xargs) ./service.py --model-path ../../cloudnet-web/contribute/model.onnx
+```
