@@ -54,7 +54,13 @@ class BotApp:
         """
         This handler will be called when user sends `/start` or `/help` command
         """
-        await message.reply("Hi!\nI'm EchoBot!\nPowered by aiogram.")
+        await message.reply(
+            "Hi!\n"
+            "I'm Bot for detection type of cloud by it photo\n"
+            "You need simple send photo of cloud\n"
+            "\n"
+            "Official site: https://cloud.anime-abyss.ru"
+        )
 
     async def hd_check_photo(self, message: types.Message):
         answer: List[str] = []

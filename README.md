@@ -2,6 +2,13 @@
 
 This is telegram bot for cloudnet.
 
+# Configuration
+
+## Environment variables
+
+- TGBOT_API_TOKEN
+- TGBOT_MODEL_PATH
+
 # Development
 
 ## Setup
