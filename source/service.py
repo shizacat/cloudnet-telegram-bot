@@ -68,8 +68,7 @@ class BotApp:
 
         if message.content_type == ContentType.PHOTO:
             answer.append(
-                "Please, for more quality result, "
-                "will send the image without compression!"
+                "For best result send an image without compression!"
             )
             await message.photo[-1].download(destination_file=image)
             image.seek(0)
