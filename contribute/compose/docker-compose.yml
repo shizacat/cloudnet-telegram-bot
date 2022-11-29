@@ -6,6 +6,8 @@ services:
       dockerfile: contribute/docker/Dockerfile
     working_dir: /opt/service
     network_mode: bridge
+    env_file:
+      - ./.env
     # setup through .env file
     # environment:
     #   - TGBOT_API_TOKEN
