@@ -56,8 +56,8 @@ class BotApp:
         """
         await message.reply(
             "Hi!\n"
-            "I'm Bot for detection type of cloud by it photo\n"
-            "You need simple send photo of cloud\n"
+            "I'm detecting the type of the cloud by its photo\n"
+            "You need simple send a photo of the cloud\n"
             "\n"
             "Official site: https://cloud.anime-abyss.ru"
         )
