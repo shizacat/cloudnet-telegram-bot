@@ -8,6 +8,7 @@ services:
     network_mode: bridge
     env_file:
       - ./.env
+    restart: always
     # setup through .env file
     # environment:
     #   - TGBOT_API_TOKEN
