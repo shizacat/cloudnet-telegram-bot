@@ -1,4 +1,4 @@
-aiogram==2.23
+aiogram==2.25
 magic-filter
 
 onnxruntime
