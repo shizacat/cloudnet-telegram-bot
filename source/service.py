@@ -90,7 +90,7 @@ class BotApp:
             answer.append(f"Class index: {label_idx}")
             answer.append(
                 "Class name: {}".format(
-                    markdown.hlink(
+                    markdown.link(
                         self.cloud.labels_info[label_idx].name,
                         self.cloud.labels_info[label_idx].url
                     )
