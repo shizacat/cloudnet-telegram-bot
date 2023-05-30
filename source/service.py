@@ -8,6 +8,7 @@ from typing import List
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types.message import ContentType
+from aiogram.utils import markdown
 
 from infer import CloudNetInfer
 
@@ -85,12 +86,22 @@ class BotApp:
 
         # Process photo if it exists
         if image.getbuffer().nbytes > 0:
-            lable_idx = self.cloud.infer(image)
-            answer.append(f"Class index: {lable_idx}")
-            answer.append(f"Class name: {self.cloud.labels_long[lable_idx]}")
+            label_idx = self.cloud.infer(image)
+            answer.append(f"Class index: {label_idx}")
+            answer.append(
+                "Class name: {}".format(
+                    markdown.hlink(
+                        self.cloud.labels_info[label_idx].name,
+                        self.cloud.labels_info[label_idx].url
+                    )
+                )
+            )
 
         if answer:
-            await message.reply("\n".join(answer))
+            await message.reply(
+                "\n".join(answer),
+                parse_mode=types.ParseMode.MARKDOWN
+            )
 
 
 class EnvStrDefault(argparse.Action):

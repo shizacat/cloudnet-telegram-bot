@@ -1,8 +1,16 @@
 import io
+from dataclasses import dataclass
 
 import numpy as np
 import onnxruntime
 from PIL import Image
+
+
+@dataclass
+class CloudInfo:
+    name: str
+    short: str
+    url: str
 
 
 class CloudNetInfer:
@@ -16,18 +24,62 @@ class CloudNetInfer:
             "Ac", "As", "Cb", "Cc", "Ci", "Cs", "Ct", "Cu", "Ns", "Sc", "St"
         ]
 
-        self.labels_long = [
-            "Altocumulus",
-            "Altostratus",
-            "Cumulonimbus",
-            "Cirrocumulus",
-            "Cirrus",
-            "Cirrostratus",
-            "Contrail",  # don't cloud
-            "Cumulus",
-            "Nimbostratus",
-            "Stratocumulus",
-            "Stratus",
+        self.labels_info = [
+            CloudInfo(
+                name="Altocumulus",
+                short="Ac",
+                url="https://cloudatlas.wmo.int/en/altocumulus-ac.html",
+            ),
+            CloudInfo(
+                name="Altostratus",
+                short="As",
+                url="https://cloudatlas.wmo.int/en/altostratus-as.html",
+            ),
+            CloudInfo(
+                name="Cumulonimbus",
+                short="Cb",
+                url="https://cloudatlas.wmo.int/en/cumulonimbus-cb.html",
+            ),
+            CloudInfo(
+                name="Cirrocumulus",
+                short="Cc",
+                url="https://cloudatlas.wmo.int/en/cirrocumulus-cc.html",
+            ),
+            CloudInfo(
+                name="Cirrus",
+                short="Ci",
+                url="https://cloudatlas.wmo.int/en/cirrus-ci.html",
+            ),
+            CloudInfo(
+                name="Cirrostratus",
+                short="Cs",
+                url="https://cloudatlas.wmo.int/en/cirrostratus-cs.html",
+            ),
+            CloudInfo(
+                name="Contrail",  # don't cloud
+                short="Ct",
+                url="https://cloudatlas.wmo.int/en/aircraft-condensation-trails.html",  # noqa: E501
+            ),
+            CloudInfo(
+                name="Cumulus",
+                short="Cu",
+                url="https://cloudatlas.wmo.int/en/cumulus-cu.html",
+            ),
+            CloudInfo(
+                name="Nimbostratus",
+                short="Ns",
+                url="https://cloudatlas.wmo.int/en/nimbostratus-ns.html",
+            ),
+            CloudInfo(
+                name="Stratocumulus",
+                short="Sc",
+                url="https://cloudatlas.wmo.int/en/stratocumulus-sc.html",
+            ),
+            CloudInfo(
+                name="Stratus",
+                short="St",
+                url="https://cloudatlas.wmo.int/en/stratus-st.html",
+            ),
         ]
 
     def setup(self):
