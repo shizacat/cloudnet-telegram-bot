@@ -4,3 +4,5 @@ magic-filter
 onnxruntime
 numpy
 pillow
+aiohttp
+prometheus_client

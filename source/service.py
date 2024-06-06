@@ -3,14 +3,16 @@
 import io
 import os
 import logging
+import asyncio
 import argparse
-from typing import List
+from typing import List, Optional
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types.message import ContentType
 from aiogram.utils import markdown
 
 from infer import CloudNetInfer
+from prometheus_aiohttp import start_aiohttp_server
 
 
 DF_ENV_PREFIX = "TGBOT"
@@ -23,13 +25,24 @@ class BotApp:
         "image/png"
     ]
 
-    def __init__(self, api_token: str, model_path: str):
+    def __init__(
+        self,
+        api_token: str,
+        model_path: str,
+        metrics_port: Optional[int] = None,
+        metrics_host: Optional[str] = None,
+        **kwargs,
+    ):
         """
         Args
             api_token - token telegram bot
             model_path - path to onnx model for cloud detection
-        """
 
+            metrics_port - port for metrics http server
+                If None, metrics server will not be started
+            metrics_host - host for metrics http server
+                If None, metrics server will be started on 127.0.0.1
+        """
         # self.logger = logging.getLogger(self.__class__)
         # self.logger.setLevel(logging.INFO)
         logging.basicConfig(level=logging.INFO)
@@ -48,8 +61,26 @@ class BotApp:
 
         self.cloud = CloudNetInfer(model_path)
 
+        # Config metrics
+        self._metrics_enable = metrics_port is not None
+        self._metrics_port = metrics_port
+        self._metrics_host = (
+            metrics_host if metrics_host is not None else "127.0.0.1"
+        )
+
     def start(self):
-        executor.start_polling(self.dp, skip_updates=True)
+        asyncio.run(self._start())
+
+    async def _start(self):
+        """Async start"""
+        # Start metrics http server
+        if self._metrics_enable:
+            await start_aiohttp_server(
+                port=self._metrics_port, host=self._metrics_host)
+
+        # Start Telegram bot
+        # executor.start_polling(self.dp, skip_updates=True)
+        await self.dp.start_polling()
 
     async def hd_send_welcome(self, message: types.Message):
         """
@@ -133,6 +164,23 @@ def arguments(args: List[str] = None):
         action=EnvStrDefault,
         envvar=f"{DF_ENV_PREFIX}_MODEL_PATH",
         help="Path to onnx model for cloudnet neural network"
+    )
+    # metrics
+    parser.add_argument(
+        "--metrics-port",
+        type=int,
+        action=EnvStrDefault,
+        envvar=f"{DF_ENV_PREFIX}_METRICS_PORT",
+        required=False,
+        help="Port for metrics http server"
+    )
+    parser.add_argument(
+        "--metrics-host",
+        type=str,
+        action=EnvStrDefault,
+        envvar=f"{DF_ENV_PREFIX}_METRICS_HOST",
+        required=False,
+        help="Host for metrics http server"
     )
     return parser.parse_args(args)
 
