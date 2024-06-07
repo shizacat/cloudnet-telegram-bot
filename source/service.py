@@ -5,17 +5,38 @@ import os
 import logging
 import asyncio
 import argparse
-from typing import List, Optional
+from typing import List, Optional, Callable, Dict, Any, Awaitable
 
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher, types, BaseMiddleware, Router, F, types as aiogram_types
 from aiogram.types.message import ContentType
+from aiogram.types import Message
 from aiogram.utils import markdown
+from aiogram.filters import Command
+from aiogram.enums.parse_mode import ParseMode
 
 from infer import CloudNetInfer
 from prometheus_aiohttp import start_aiohttp_server
 
 
 DF_ENV_PREFIX = "TGBOT"
+
+
+class MiddlewarePrometheusRequest(BaseMiddleware):
+    """
+    Prometheus metrics - requests
+    """
+    def __init__(self) -> None:
+        self.counter = 0
+
+    async def __call__(
+        self,
+        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+        event: Message,
+        data: Dict[str, Any]
+    ) -> Any:
+        self.counter += 1
+        data['counter'] = self.counter
+        return await handler(event, data)
 
 
 class BotApp:
@@ -48,16 +69,18 @@ class BotApp:
         logging.basicConfig(level=logging.INFO)
 
         self.bot = Bot(api_token)
-        self.dp = Dispatcher(self.bot)
+        self.dp = Dispatcher()
+        self.router = Router()
 
-        self.dp.register_message_handler(
-            self.hd_send_welcome,
-            commands=['start', 'help']
+        # Fill router
+        # Filter is arguments
+        self.router.message.register(
+            self.hd_send_welcome, Command(commands=['start', 'help'])
         )
-        self.dp.register_message_handler(
-            self.hd_check_photo,
-            content_types=[ContentType.PHOTO, ContentType.DOCUMENT]
+        self.router.message.register(
+            self.hd_check_photo, F.photo | F.document
         )
+        self.dp.include_router(self.router)
 
         self.cloud = CloudNetInfer(model_path)
 
@@ -69,7 +92,10 @@ class BotApp:
         )
 
     def start(self):
-        asyncio.run(self._start())
+        try:
+            asyncio.run(self._start())
+        except KeyboardInterrupt:
+            self.dp.stop_polling()
 
     async def _start(self):
         """Async start"""
@@ -80,7 +106,7 @@ class BotApp:
 
         # Start Telegram bot
         # executor.start_polling(self.dp, skip_updates=True)
-        await self.dp.start_polling()
+        await self.dp.start_polling(self.bot)
 
     async def hd_send_welcome(self, message: types.Message):
         """
@@ -102,8 +128,7 @@ class BotApp:
             answer.append(
                 "For best result send an image without compression!"
             )
-            await message.photo[-1].download(destination_file=image)
-            image.seek(0)
+            image = await self._download_file(message.photo[-1].file_id)
 
         if message.content_type == ContentType.DOCUMENT:
             if message.document.mime_type not in self.supported_mime_types:
@@ -112,8 +137,7 @@ class BotApp:
                     f"{message.document.mime_type}"
                 )
             else:
-                await message.document.download(destination_file=image)
-                image.seek(0)
+                image = await self._download_file(message.document.file_id)
 
         # Process photo if it exists
         if image.getbuffer().nbytes > 0:
@@ -130,9 +154,13 @@ class BotApp:
 
         if answer:
             await message.reply(
-                "\n".join(answer),
-                parse_mode=types.ParseMode.MARKDOWN
+                "\n".join(answer), parse_mode=ParseMode.MARKDOWN
             )
+
+    async def _download_file(self, file_id) -> io.BytesIO:
+        """Download file from Telegram"""
+        file = await self.bot.get_file(file_id)
+        return await self.bot.download_file(file.file_path)
 
 
 class EnvStrDefault(argparse.Action):
