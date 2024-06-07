@@ -8,6 +8,8 @@ This is telegram bot for cloudnet.
 
 - TGBOT_API_TOKEN
 - TGBOT_MODEL_PATH
+- TGBOT_METRICS_PORT
+- TGBOT_METRICS_HOST
 
 # Development
 
