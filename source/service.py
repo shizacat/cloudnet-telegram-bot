@@ -7,6 +7,7 @@ import asyncio
 import argparse
 from typing import List, Optional, Callable, Dict, Any, Awaitable
 
+import prometheus_client
 from aiogram import Bot, Dispatcher, types, BaseMiddleware, Router, F, types as aiogram_types
 from aiogram.types.message import ContentType
 from aiogram.types import Message
@@ -25,8 +26,26 @@ class MiddlewarePrometheusRequest(BaseMiddleware):
     """
     Prometheus metrics - requests
     """
-    def __init__(self) -> None:
-        self.counter = 0
+    def __init__(
+        self,
+        metrics_prefix="aiogram",
+        registry: prometheus_client.CollectorRegistry = None
+    ) -> None:
+        used_registry = registry if registry else prometheus_client.REGISTRY
+
+        self.c_requests = prometheus_client.Counter(
+            name=f"{metrics_prefix}_requests",
+            documentation="Total requests.",
+            labelnames=["user_id"],
+            registry=used_registry,
+        )
+        self.h_requests_duration = prometheus_client.Histogram(
+            name=f"{metrics_prefix}_requests_duration",
+            documentation="Histogram of requests processing time.",
+            labelnames=[],
+            unit="seconds",
+            registry=used_registry,
+        )
 
     async def __call__(
         self,
@@ -34,9 +53,22 @@ class MiddlewarePrometheusRequest(BaseMiddleware):
         event: Message,
         data: Dict[str, Any]
     ) -> Any:
-        self.counter += 1
-        data['counter'] = self.counter
-        return await handler(event, data)
+        loop = asyncio.get_running_loop()
+
+        self.c_requests.labels(user_id=self._get_user_id(event)).inc()
+
+        request_start_time = loop.time()
+        try:
+            return await handler(event, data)
+        finally:
+            request_end_time = loop.time()
+
+            self.h_requests_duration.labels().observe(
+                request_end_time - request_start_time)
+
+    def _get_user_id(self, event: Message) -> Optional[str]:
+        if event.from_user is not None:
+            return str(event.from_user.id)
 
 
 class BotApp:
@@ -81,6 +113,7 @@ class BotApp:
             self.hd_check_photo, F.photo | F.document
         )
         self.dp.include_router(self.router)
+        self.router.message.middleware(MiddlewarePrometheusRequest())
 
         self.cloud = CloudNetInfer(model_path)
 
