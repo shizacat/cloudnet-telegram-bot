@@ -63,7 +63,7 @@ class MiddlewarePrometheusRequest(BaseMiddleware):
         finally:
             request_end_time = loop.time()
 
-            self.h_requests_duration.labels().observe(
+            self.h_requests_duration.observe(
                 request_end_time - request_start_time)
 
     def _get_user_id(self, event: Message) -> Optional[str]:
